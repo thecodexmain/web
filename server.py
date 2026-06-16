@@ -188,7 +188,7 @@ if __name__ == '__main__':
     with socketserver.ThreadingTCPServer(("0.0.0.0", PORT), CustomRouter) as httpd:
         print(f"Server running on port {PORT}")
         try:
-    httpd.serve_forever()
-except KeyboardInterrupt:
-    print("\nShutting down server...")
-    httpd.server_close()
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nShutting down server...")
+            httpd.server_close()
