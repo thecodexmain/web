@@ -1,9 +1,11 @@
+import os
+import json
 import http.server
 import socketserver
 import re
 import urllib.parse
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 
 class CustomRouter(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -180,15 +182,14 @@ class CustomRouter(http.server.SimpleHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
-import os
-import json
 
 if __name__ == '__main__':
     socketserver.ThreadingTCPServer.allow_reuse_address = True
-    with socketserver.ThreadingTCPServer(("", PORT), CustomRouter) as httpd:
-        print(f"Server running at http://localhost:{PORT}/")
+    with socketserver.ThreadingTCPServer(("0.0.0.0", PORT), CustomRouter) as httpd:
+        print(f"Server running on port {PORT}")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
-            print("\nShutting down server...")
+            print("
+Shutting down server...")
             httpd.server_close()
