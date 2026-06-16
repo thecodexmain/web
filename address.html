@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Delivery Address - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="back-btn" onclick="history.back()">
+        <svg fill="currentColor" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+        </svg>
+      </div>
+      <div class="page-title">Add Delivery Address</div>
+    </div>
+
+    <!-- Address Form -->
+    <div class="form-container">
+      <form id="addressForm">
+        <div class="form-group">
+          <label class="form-label" for="fname">Full Name (Required)*</label>
+          <input type="text" id="fname" name="fname" class="form-input" placeholder="Full name" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="mobile">Mobile Number (Required)*</label>
+          <input type="tel" id="mobile" name="mobile" class="form-input" placeholder="Mobile number" pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="pincode">PIN Code (Required)*</label>
+            <input type="number" id="pincode" name="pincode" class="form-input" placeholder="PIN code" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="city">Town/City (Required)*</label>
+            <input type="text" id="city" name="city" class="form-input" placeholder="Town/City" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="state">State (Required)*</label>
+          <select id="state" name="state" class="form-input" required style="background-color: white;">
+            <option value="" disabled selected>Select State</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option>
+            <option value="Assam">Assam</option>
+            <option value="Bihar">Bihar</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Haryana">Haryana</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Kerala">Kerala</option>
+            <option value="Madhya Pradesh">Madhya Pradesh</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Punjab">Punjab</option>
+            <option value="Rajasthan">Rajasthan</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="Telangana">Telangana</option>
+            <option value="Uttar Pradesh">Uttar Pradesh</option>
+            <option value="West Bengal">West Bengal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="house">Flat, House no., Building, Company (Required)*</label>
+          <input type="text" id="house" name="house" class="form-input" placeholder="Flat, House.no, Building, Company" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="colonny">Area, Colony, Street, Sector, Village (Required)*</label>
+          <input type="text" id="colonny" name="colonny" class="form-input" placeholder="Area, Colony, Street, Sector, Village" required>
+        </div>
+
+        <button type="submit" class="btn-submit">Save Address</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Load existing address if any
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedAddress = localStorage.getItem('delivery_address');
+      if (savedAddress) {
+        try {
+          const addr = JSON.parse(savedAddress);
+          document.getElementById('fname').value = addr.fname || '';
+          document.getElementById('mobile').value = addr.mobile || '';
+          document.getElementById('pincode').value = addr.pincode || '';
+          document.getElementById('city').value = addr.city || '';
+          document.getElementById('state').value = addr.state || '';
+          document.getElementById('house').value = addr.house || '';
+          document.getElementById('colonny').value = addr.colonny || '';
+        } catch (e) {
+          console.error("Error parsing existing address:", e);
+        }
+      }
+    });
+
+    // Form submit listener
+    document.getElementById('addressForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const addressData = {
+        fname: document.getElementById('fname').value.trim(),
+        mobile: document.getElementById('mobile').value.trim(),
+        pincode: document.getElementById('pincode').value.trim(),
+        city: document.getElementById('city').value.trim(),
+        state: document.getElementById('state').value,
+        house: document.getElementById('house').value.trim(),
+        colonny: document.getElementById('colonny').value.trim()
+      };
+
+      // Save to localStorage
+      localStorage.setItem('delivery_address', JSON.stringify(addressData));
+      
+      // Redirect to Order Summary
+      window.location.href = '/ordersummdary';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Admin specific sleek desktop styles */
+    body {
+      background: #f4f6f9;
+      display: block;
+      color: #333;
+    }
+    .admin-wrapper {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #ddd;
+    }
+    .admin-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .metric-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--primary-color);
+    }
+    .metric-card.accent {
+      border-left-color: var(--accent-color);
+    }
+    .metric-card.success {
+      border-left-color: var(--success-color);
+    }
+    .metric-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .metric-val {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111;
+    }
+    .admin-card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+    .admin-card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: #2c3e50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-action {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .btn-action:hover {
+      filter: brightness(0.9);
+    }
+    .btn-danger {
+      background-color: #d9534f;
+    }
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+      text-align: left;
+    }
+    .orders-table th, .orders-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .orders-table th {
+      background-color: #f7f9fa;
+      font-weight: 600;
+      color: #555;
+    }
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-badge.pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .status-badge.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .config-form {
+      display: flex;
+      gap: 15px;
+      align-items: flex-end;
+    }
+    .config-form .form-group {
+      margin-bottom: 0;
+      flex-grow: 1;
+    }
+    @media (max-width: 768px) {
+      .metrics-row {
+        grid-template-columns: 1fr;
+      }
+      .config-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Admin Header -->
+    <div class="admin-header">
+      <div class="admin-title">Merchant Admin Panel</div>
+      <a href="/" class="btn-action" style="background-color: #fff; color: var(--primary-color); border: 1px solid var(--primary-color); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 38px;">Go to Storefront</a>
+    </div>
+
+    <!-- Quick Stats Metrics -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Total Orders</div>
+        <div class="metric-val" id="totalOrders">0</div>
+      </div>
+      <div class="metric-card success">
+        <div class="metric-label">Total Revenue</div>
+        <div class="metric-val">₹<span id="totalRevenue">0</span></div>
+      </div>
+      <div class="metric-card accent">
+        <div class="metric-label">Active UPI Address</div>
+        <div class="metric-val" id="activeUpi" style="font-size: 16px; margin-top: 10px; word-break: break-all;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- UPI Configuration Setting -->
+    <div class="admin-card">
+      <h3 class="admin-card-title">UPI Configuration</h3>
+      <form id="upiForm" class="config-form">
+        <div class="form-group" style="flex-grow: 1;">
+          <label class="form-label" for="upiInput">Receive Payments UPI ID (PA Address)</label>
+          <input type="text" id="upiInput" class="form-input" placeholder="e.g. merchant@ybl" required>
+        </div>
+        <button type="submit" class="btn-action">Update UPI ID</button>
+      </form>
+    </div>
+
+    <!-- Recent Orders Table -->
+    <div class="admin-card">
+      <div class="admin-card-title">
+        <span>Recent Orders Recorded</span>
+        <button class="btn-action btn-danger" id="clearOrdersBtn" style="padding: 6px 12px; font-size: 12px;">Reset Orders Log</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Product Details</th>
+              <th>Price</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date/Time</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                No orders recorded yet. Place a test checkout to see orders appear here!
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Fetch current UPI config
+    async function loadUpiConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        document.getElementById('activeUpi').textContent = data.upi_id;
+        document.getElementById('upiInput').value = data.upi_id;
+      } catch (err) {
+        console.error("Error loading UPI config:", err);
+      }
+    }
+
+    // Update UPI config on submit
+    document.getElementById('upiForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newUpi = document.getElementById('upiInput').value.trim();
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ upi_id: newUpi })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+          alert("UPI Address successfully updated!");
+          document.getElementById('activeUpi').textContent = newUpi;
+        } else {
+          alert("Error updating UPI ID: " + result.message);
+        }
+      } catch (err) {
+        console.error("Error saving UPI ID:", err);
+      }
+    });
+
+    // Fetch orders and calculate stats
+    async function loadOrders() {
+      try {
+        const res = await fetch('/api/orders');
+        const orders = await res.json();
+        renderOrders(orders);
+      } catch (err) {
+        console.error("Error loading orders:", err);
+      }
+    }
+
+    function renderOrders(orders) {
+      const tbody = document.getElementById('ordersTableBody');
+      const totalOrdersEl = document.getElementById('totalOrders');
+      const totalRevenueEl = document.getElementById('totalRevenue');
+
+      totalOrdersEl.textContent = orders.length;
+
+      let revenue = 0;
+      if (orders.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No orders recorded yet. Place a test checkout to see orders appear here!
+            </td>
+          </tr>
+        `;
+        totalRevenueEl.textContent = "0";
+        return;
+      }
+
+      // Populate orders list sorted by date descending
+      const sortedOrders = [...orders].reverse();
+      tbody.innerHTML = sortedOrders.map(o => {
+        const price = parseInt(o.price, 10) || 0;
+        revenue += price;
+        
+        // Date format
+        const dateStr = o.timestamp ? new Date(o.timestamp).toLocaleString() : 'N/A';
+        const statusClass = (o.status && o.status.toLowerCase() === 'success') ? 'success' : 'pending';
+        
+        return `
+          <tr>
+            <td style="font-family: monospace; font-weight: bold;">${o.order_id || 'N/A'}</td>
+            <td>
+              <div style="font-weight: 600;">${o.name || 'N/A'}</div>
+              <div style="font-size: 11px; color: #777;">Ph: ${o.mobile || 'N/A'}</div>
+              <div style="font-size: 11px; color: #777;">${o.city || 'N/A'}, ${o.state || 'N/A'}</div>
+            </td>
+            <td>
+              <div style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">
+                ${o.product_title || 'N/A'}
+              </div>
+            </td>
+            <td style="font-weight: bold; color: var(--text-dark);">₹${price}</td>
+            <td style="text-transform: capitalize;">${o.payment_method || 'N/A'}</td>
+            <td><span class="status-badge ${statusClass}">${o.status || 'Pending'}</span></td>
+            <td style="color: #666; font-size: 11px;">${dateStr}</td>
+          </tr>
+        `;
+      }).join('');
+
+      totalRevenueEl.textContent = revenue;
+    }
+
+    // Reset Orders Log
+    document.getElementById('clearOrdersBtn').addEventListener('click', async () => {
+      if (!confirm("Are you sure you want to clear all recorded orders? This cannot be undone.")) return;
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([])
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+          alert("Orders log successfully cleared!");
+          loadOrders();
+        } else {
+          alert("Error clearing orders: " + result.message);
+        }
+      } catch (err) {
+        console.error("Error clearing orders:", err);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadUpiConfig();
+      loadOrders();
+    });
+  </script>
+</body>
+</html>

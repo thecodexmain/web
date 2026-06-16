@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deals of the Day - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <a href="/" class="menu-logo-area">
+          <!-- Hamburger menu icon -->
+          <svg fill="#FFF" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+          </svg>
+          <!-- Logo image placeholder/style -->
+          <span style="font-weight: 800; font-style: italic; font-size: 18px; letter-spacing: 0.5px; color: #fff;">Flipkart</span>
+        </a>
+        <a href="/ordersummdary" class="cart-icon-wrapper">
+          <!-- Shopping Cart Icon -->
+          <svg width="20" height="20" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#fff" fill-rule="evenodd">
+              <path d="m5.189 13.04c0 .996-.791 1.804-1.767 1.804-.976 0-1.767-.808-1.767-1.804 0-.996.791-1.804 1.767-1.804.976 0 1.767.808 1.767 1.804"></path>
+              <path d="m14.912 2.259h-14.298l2.247 6.917c.042.129.16.216.293.216h8.06c-.064.69-.629 1.841-1.702 1.841h-6.04l1.072 1.991h5.611c1.881 0 2.938-2.278 3.657-4.719.888-3.01 1.219-6.245 1.106-6.245"></path>
+              <path d="m.615 2.259l-.592-1.828c-.08-.207.069-.431.287-.431h1.482c.126 0 .24.079.287.198l.682 2.061c0 0-.63 1.642-1.942.066"></path>
+              <path d="m2.262.756c0 0 .498 1.503 2.234 1.503l-1.736.749-1.104-.749.607-1.503"></path>
+              <path d="m13.424 13.325c0 .837-.664 1.516-1.484 1.516-.82 0-1.484-.679-1.484-1.516 0-.837.664-1.516 1.484-1.516.82 0 1.484.679 1.484 1.516"></path>
+            </g>
+          </svg>
+          <span class="cart-badge" id="cartBadgeCount">1</span>
+        </a>
+      </div>
+      <div class="search-bar-wrapper">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search for Products, Brands and More">
+      </div>
+    </header>
+
+    <!-- Deals of the Day countdown banner -->
+    <div class="deal-timer-banner">
+      <div class="deal-label">Deals of the Day</div>
+      <div class="timer-box" id="dealTimer">
+        <!-- Clock SVG -->
+        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" style="font-size:16px" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+          <path d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm0,448A208,208,0,1,1,464,256,208.23,208.23,0,0,1,256,456Zm16-296H240v120l104,62.4,16-26.2-88-52.8Z"></path>
+        </svg>
+        <span id="timerText">11:28:45</span>
+      </div>
+    </div>
+
+    <!-- Sale is Live Pulsing Badge Banner -->
+    <div class="live-badge-glow">
+      🔥 MID-YEAR MEGA SALE IS LIVE - UP TO 95% OFF! 🔥
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="productsGrid">
+      <!-- Loader indicator initially -->
+      <div style="grid-column: 1 / span 2; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">
+        Loading curated deals...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Timer Logic for Deals of the Day
+    function initTimer() {
+      // Set end time for today's deal (11 hours 28 mins from now, or stored in localStorage)
+      let endTime = localStorage.getItem('deal_end_time');
+      if (!endTime) {
+        endTime = Date.now() + (11 * 3600 * 1000) + (28 * 60 * 1000) + (45 * 1000);
+        localStorage.setItem('deal_end_time', endTime);
+      } else {
+        endTime = parseInt(endTime, 10);
+        if (endTime < Date.now()) {
+          // Reset if expired
+          endTime = Date.now() + (11 * 3600 * 1000) + (28 * 60 * 1000) + (45 * 1000);
+          localStorage.setItem('deal_end_time', endTime);
+        }
+      }
+
+      function updateClock() {
+        const remaining = endTime - Date.now();
+        if (remaining <= 0) {
+          document.getElementById('timerText').textContent = "Offer Ended";
+          return;
+        }
+
+        const hours = Math.floor((remaining % (24 * 3600 * 1000)) / (3600 * 1000));
+        const mins = Math.floor((remaining % (3600 * 1000)) / (60 * 1000));
+        const secs = Math.floor((remaining % (60 * 1000)) / 1000);
+
+        const hStr = hours.toString().padStart(2, '0');
+        const mStr = mins.toString().padStart(2, '0');
+        const sStr = secs.toString().padStart(2, '0');
+
+        document.getElementById('timerText').textContent = `${hStr}:${mStr}:${sStr}`;
+      }
+
+      setInterval(updateClock, 1000);
+      updateClock();
+    }
+
+    // Load Products
+    let allProducts = [];
+    async function loadProducts() {
+      try {
+        const response = await fetch('/products.json');
+        allProducts = await response.json();
+        renderProducts(allProducts);
+      } catch (err) {
+        console.error("Error loading products database:", err);
+        document.getElementById('productsGrid').innerHTML = `
+          <div style="grid-column: 1 / span 2; text-align: center; padding: 40px; color: var(--accent-color); font-size: 14px;">
+            Failed to load products. Please refresh.
+          </div>
+        `;
+      }
+    }
+
+    function renderProducts(products) {
+      const grid = document.getElementById('productsGrid');
+      if (products.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / span 2; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">
+            No products found matching your search.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = products.map(p => {
+        // Handle images
+        const mainImg = (p.images && p.images.length > 0) ? p.images[0] : '';
+        
+        return `
+          <a href="/product-details/${p.id}" class="product-card">
+            <div class="product-img-wrapper">
+              <img src="${mainImg}" alt="${p.title}" class="product-card-img" loading="lazy">
+            </div>
+            <div class="product-info">
+              <div class="product-title">${p.title}</div>
+              <div class="price-row">
+                <span class="selling-price">₹${p.selling_price}</span>
+                <span class="original-price">₹${p.original_price}</span>
+                <span class="discount-tag">${p.discount}</span>
+              </div>
+              <div class="limited-deal-badge">Limited time deal</div>
+              <div class="delivery-notice">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success-color);">
+                  <rect x="1" y="3" width="15" height="13"></rect>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+                <span>Free Delivery in Two Days</span>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    // Search input event listener
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase().trim();
+      const filtered = allProducts.filter(p => p.title.toLowerCase().includes(val));
+      renderProducts(filtered);
+    });
+
+    // Update cart badge from localstorage count or defaults to 1
+    function updateCartCount() {
+      // In the target site checkout flow, cart usually starts with 1 item or matches selection
+      const activeProduct = localStorage.getItem('selected_product');
+      if (activeProduct) {
+        document.getElementById('cartBadgeCount').textContent = "1";
+      } else {
+        document.getElementById('cartBadgeCount').textContent = "1";
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTimer();
+      loadProducts();
+      updateCartCount();
+    });
+  </script>
+</body>
+</html>

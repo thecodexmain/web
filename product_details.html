@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header with Back Button -->
+    <header style="display: flex; align-items: center; justify-content: space-between; height: 50px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="/" class="back-btn">
+          <svg fill="#FFF" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+          </svg>
+        </a>
+        <span style="font-weight: 700; font-size: 15px; color: #fff;">Product details</span>
+      </div>
+      <a href="/ordersummdary" class="cart-icon-wrapper">
+        <svg width="20" height="20" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg">
+          <g fill="#fff" fill-rule="evenodd">
+            <path d="m5.189 13.04c0 .996-.791 1.804-1.767 1.804-.976 0-1.767-.808-1.767-1.804 0-.996.791-1.804 1.767-1.804.976 0 1.767.808 1.767 1.804"></path>
+            <path d="m14.912 2.259h-14.298l2.247 6.917c.042.129.16.216.293.216h8.06c-.064.69-.629 1.841-1.702 1.841h-6.04l1.072 1.991h5.611c1.881 0 2.938-2.278 3.657-4.719.888-3.01 1.219-6.245 1.106-6.245"></path>
+            <path d="m.615 2.259l-.592-1.828c-.08-.207.069-.431.287-.431h1.482c.126 0 .24.079.287.198l.682 2.061c0 0-.63 1.642-1.942.066"></path>
+            <path d="m2.262.756c0 0 .498 1.503 2.234 1.503l-1.736.749-1.104-.749.607-1.503"></path>
+            <path d="m13.424 13.325c0 .837-.664 1.516-1.484 1.516-.82 0-1.484-.679-1.484-1.516 0-.837.664-1.516 1.484-1.516.82 0 1.484.679 1.484 1.516"></path>
+          </g>
+        </svg>
+        <span class="cart-badge">1</span>
+      </a>
+    </header>
+
+    <div class="product-details-container" id="detailsContainer">
+      <!-- Loading indicator -->
+      <div style="text-align: center; padding: 100px 20px; color: var(--text-muted);">
+        Loading product details...
+      </div>
+    </div>
+
+    <!-- Bottom Sticky Purchase Buttons -->
+    <div class="bottom-sticky-bar">
+      <button class="sticky-btn btn-add-cart" id="addToCartBtn">Add to Cart</button>
+      <button class="sticky-btn btn-buy-now" id="buyNowBtn">Buy Now</button>
+    </div>
+  </div>
+
+  <script>
+    // Extract dynamic product ID from URL query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = parseInt(urlParams.get('id'), 10) || 1;
+
+    let currentProduct = null;
+    let currentSlide = 0;
+
+    // Fetch products and populate data
+    async function loadProductDetails() {
+      try {
+        const response = await fetch('/products.json');
+        const products = await response.json();
+        currentProduct = products.find(p => p.id === productId);
+
+        if (!currentProduct) {
+          document.getElementById('detailsContainer').innerHTML = `
+            <div style="text-align: center; padding: 80px 20px; color: var(--accent-color);">
+              Product not found. <a href="/">Return home</a>
+            </div>
+          `;
+          return;
+        }
+
+        renderDetails(currentProduct);
+        initCarousel();
+        initDetailTimer();
+      } catch (err) {
+        console.error("Error fetching product details:", err);
+      }
+    }
+
+    function renderDetails(p) {
+      const container = document.getElementById('detailsContainer');
+
+      // Create specifications list
+      let specsHtml = '';
+      if (p.specs && Object.keys(p.specs).length > 0) {
+        specsHtml = `
+          <div class="specs-block">
+            <h3 class="section-title">Specifications</h3>
+            <table class="specs-table">
+              <tbody>
+                ${Object.entries(p.specs).map(([k, v]) => `
+                  <tr>
+                    <td class="specs-label">${k}</td>
+                    <td class="specs-value">${v}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      // Create About this item bullets
+      let aboutHtml = '';
+      if (p.about && p.about.length > 0) {
+        aboutHtml = `
+          <div class="about-block">
+            <h3 class="section-title">About this item</h3>
+            <ul class="about-list">
+              ${p.about.map(bullet => `<li>${bullet}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Slides for carousel
+      const images = (p.images && p.images.length > 0) ? p.images : [''];
+      const slidesHtml = images.map((img, i) => `
+        <div class="carousel-slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+          <img src="${img}" alt="${p.title}">
+        </div>
+      `).join('');
+
+      const dotsHtml = images.map((_, i) => `
+        <span class="carousel-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>
+      `).join('');
+
+      container.innerHTML = `
+        <!-- Image Slider Carousel -->
+        <div class="carousel-container">
+          <div class="carousel-slides">
+            ${slidesHtml}
+          </div>
+          ${images.length > 1 ? `
+            <button class="carousel-btn carousel-prev">&#10094;</button>
+            <button class="carousel-btn carousel-next">&#10095;</button>
+            <div class="carousel-dots">
+              ${dotsHtml}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Product titles & Ratings -->
+        <div class="detail-info-block">
+          <h1 class="detail-title">${p.title}</h1>
+          
+          <div class="rating-badge-row">
+            <div class="star-rating">
+              <span>4.3</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFF">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            </div>
+            <span class="rating-count">120 ratings and 5 reviews</span>
+            <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/fa_62b44c.png" class="f-assured-img" alt="Assured">
+          </div>
+
+          <!-- Dynamic Pricing Box with Local Session Timer -->
+          <div class="detail-price-box">
+            <div class="detail-offer-ends">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse 1.5s infinite;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Offer ends in <span id="detailTimerText">14:59</span></span>
+            </div>
+            <div class="detail-pricing-row">
+              <span class="detail-sell-price">₹${p.selling_price}</span>
+              <span class="detail-orig-price">₹${p.original_price}</span>
+              <span class="detail-discount">${p.discount}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--success-color); font-weight: 600; margin-top: 6px;">
+              Delivery: FREE Delivery
+            </div>
+          </div>
+
+          <!-- Badges -->
+          <div class="info-badges-list">
+            <div class="info-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+              </svg>
+              <span>7 days Replacement</span>
+            </div>
+            <div class="info-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              <span>Plus (F-Assured)</span>
+            </div>
+            <div class="info-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-color);">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>No Cash On Delivery</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specifications -->
+        ${specsHtml}
+
+        <!-- Bullet descriptions -->
+        ${aboutHtml}
+      `;
+    }
+
+    // Image carousel interaction logic
+    function initCarousel() {
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.carousel-dot');
+      const prevBtn = document.querySelector('.carousel-prev');
+      const nextBtn = document.querySelector('.carousel-next');
+
+      if (slides.length <= 1) return;
+
+      function goToSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        dots[currentSlide].classList.remove('active');
+        currentSlide = (n + slides.length) % slides.length;
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+      }
+
+      prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+      nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+      dots.forEach((dot, idx) => {
+        dot.addEventListener('click', () => goToSlide(idx));
+      });
+    }
+
+    // Offer Timer logic: countdown 15 minutes
+    function initDetailTimer() {
+      let timerEnd = sessionStorage.getItem(`detail_timer_${productId}`);
+      if (!timerEnd) {
+        timerEnd = Date.now() + (14 * 60 * 1000) + (55 * 1000); // 14m 55s default
+        sessionStorage.setItem(`detail_timer_${productId}`, timerEnd);
+      } else {
+        timerEnd = parseInt(timerEnd, 10);
+        if (timerEnd < Date.now()) {
+          // Reset timer
+          timerEnd = Date.now() + (14 * 60 * 1000) + (55 * 1000);
+          sessionStorage.setItem(`detail_timer_${productId}`, timerEnd);
+        }
+      }
+
+      function updateTimer() {
+        const remaining = timerEnd - Date.now();
+        const el = document.getElementById('detailTimerText');
+        if (!el) return;
+
+        if (remaining <= 0) {
+          el.textContent = "Ended";
+          return;
+        }
+
+        const mins = Math.floor((remaining % (3600 * 1000)) / (60 * 1000));
+        const secs = Math.floor((remaining % (60 * 1000)) / 1000);
+
+        const mStr = mins.toString().padStart(2, '0');
+        const sStr = secs.toString().padStart(2, '0');
+
+        el.textContent = `${mStr} min ${sStr} sec`;
+      }
+
+      setInterval(updateTimer, 1000);
+      updateTimer();
+    }
+
+    // Action button events
+    document.getElementById('buyNowBtn').addEventListener('click', () => {
+      if (!currentProduct) return;
+      
+      // Save product selection in localstorage
+      localStorage.setItem('selected_product_id', currentProduct.id);
+      
+      // Check if address is saved
+      const savedAddress = localStorage.getItem('delivery_address');
+      if (savedAddress) {
+        // Route directly to order summary page
+        window.location.href = '/ordersummdary';
+      } else {
+        // Route to address details form page
+        window.location.href = '/address';
+      }
+    });
+
+    document.getElementById('addToCartBtn').addEventListener('click', () => {
+      alert("Product added to cart!");
+    });
+
+    window.addEventListener('DOMContentLoaded', loadProductDetails);
+  </script>
+</body>
+</html>

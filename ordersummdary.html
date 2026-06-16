@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Summary - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header style="display: flex; align-items: center; justify-content: space-between; height: 50px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="/" class="back-btn">
+          <svg fill="#FFF" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+          </svg>
+        </a>
+        <span style="font-weight: 700; font-size: 15px; color: #fff;">Order Summary</span>
+      </div>
+      <a href="/ordersummdary" class="cart-icon-wrapper">
+        <svg width="20" height="20" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg">
+          <g fill="#fff" fill-rule="evenodd">
+            <path d="m5.189 13.04c0 .996-.791 1.804-1.767 1.804-.976 0-1.767-.808-1.767-1.804 0-.996.791-1.804 1.767-1.804.976 0 1.767.808 1.767 1.804"></path>
+            <path d="m14.912 2.259h-14.298l2.247 6.917c.042.129.16.216.293.216h8.06c-.064.69-.629 1.841-1.702 1.841h-6.04l1.072 1.991h5.611c1.881 0 2.938-2.278 3.657-4.719.888-3.01 1.219-6.245 1.106-6.245"></path>
+            <path d="m.615 2.259l-.592-1.828c-.08-.207.069-.431.287-.431h1.482c.126 0 .24.079.287.198l.682 2.061c0 0-.63 1.642-1.942.066"></path>
+            <path d="m2.262.756c0 0 .498 1.503 2.234 1.503l-1.736.749-1.104-.749.607-1.503"></path>
+            <path d="m13.424 13.325c0 .837-.664 1.516-1.484 1.516-.82 0-1.484-.679-1.484-1.516 0-.837.664-1.516 1.484-1.516.82 0 1.484.679 1.484 1.516"></path>
+          </g>
+        </svg>
+        <span class="cart-badge">1</span>
+      </a>
+    </header>
+
+    <div class="orders-summary-container">
+      <!-- Shipping Address Info Card -->
+      <div class="info-card">
+        <div class="card-header-row">
+          <span class="card-title-text">Delivered to:</span>
+          <a href="/address" class="edit-link">Change</a>
+        </div>
+        <div class="address-details" id="addressDisplay">
+          <!-- Dynamic address or placeholder -->
+        </div>
+      </div>
+
+      <!-- Selected Product Card -->
+      <div class="checkout-prod-card" id="productCheckoutCard">
+        <!-- Loader or dynamic content -->
+      </div>
+
+      <!-- Price Breakdown Card -->
+      <div class="price-breakdown-card" id="priceBreakdownCard">
+        <!-- Dynamic price calculation -->
+      </div>
+
+      <!-- Flipkart Trust Seals -->
+      <div class="trust-seals-card">
+        <div class="seal-item">
+          <!-- Shield SVG -->
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Safe and secure payments.</span>
+        </div>
+        <div class="seal-item">
+          <!-- Rotate CCW SVG -->
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 2v6h6M3 13a9 9 0 1 0 3-7.7L3 8"/>
+          </svg>
+          <span>Easy returns.</span>
+        </div>
+        <div class="seal-item">
+          <!-- Award/Badge SVG -->
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="7"/>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+          </svg>
+          <span>100% Authentic products.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Sticky Bottom Button -->
+    <div class="bottom-sticky-bar">
+      <button class="sticky-btn btn-confirm" id="confirmOrderBtn">Confirm</button>
+    </div>
+  </div>
+
+  <script>
+    // Configuration defaults
+    const FALLBACK_PRODUCT_ID = 9; // Toshiba Countertop Microwave Oven
+
+    let selectedProductId = localStorage.getItem('selected_product_id');
+    if (!selectedProductId) {
+      selectedProductId = FALLBACK_PRODUCT_ID;
+    } else {
+      selectedProductId = parseInt(selectedProductId, 10);
+    }
+
+    let currentProduct = null;
+
+    // Load Address Details
+    function loadAddress() {
+      const addrEl = document.getElementById('addressDisplay');
+      const savedAddress = localStorage.getItem('delivery_address');
+
+      if (savedAddress) {
+        try {
+          const addr = JSON.parse(savedAddress);
+          addrEl.innerHTML = `
+            <div class="address-name">${addr.fname}</div>
+            <div>${addr.house}, ${addr.colonny}</div>
+            <div>${addr.city}, ${addr.state} - ${addr.pincode}</div>
+            <div class="address-phone">Mobile: ${addr.mobile}</div>
+          `;
+        } catch (e) {
+          console.error("Error loading saved address:", e);
+          loadPlaceholderAddress(addrEl);
+        }
+      } else {
+        loadPlaceholderAddress(addrEl);
+      }
+    }
+
+    function loadPlaceholderAddress(el) {
+      // Show default placeholder address matching Flipkart style
+      el.innerHTML = `
+        <div class="address-name">Rahul Kumar</div>
+        <div>Flat No. 402, Star Apartment, Sector 62</div>
+        <div>Noida, Uttar Pradesh - 201301</div>
+        <div class="address-phone">Mobile: 9876543210</div>
+      `;
+    }
+
+    // Load selected product and render summary
+    async function loadProductSummary() {
+      try {
+        const response = await fetch('/products.json');
+        const products = await response.json();
+        currentProduct = products.find(p => p.id === selectedProductId) || products.find(p => p.id === FALLBACK_PRODUCT_ID);
+
+        if (!currentProduct) {
+          document.getElementById('productCheckoutCard').innerHTML = `
+            <div style="text-align: center; width:100%; color: var(--accent-color);">
+              Failed to load product.
+            </div>
+          `;
+          return;
+        }
+
+        renderSummary(currentProduct);
+      } catch (err) {
+        console.error("Error fetching products database:", err);
+      }
+    }
+
+    function renderSummary(p) {
+      const prodCard = document.getElementById('productCheckoutCard');
+      const priceCard = document.getElementById('priceBreakdownCard');
+
+      // Save title to localStorage for payment page logging
+      localStorage.setItem('selected_product_title', p.title);
+
+      // Product layout
+      const mainImg = (p.images && p.images.length > 0) ? p.images[0] : '';
+      prodCard.innerHTML = `
+        <img src="${mainImg}" alt="${p.title}" class="checkout-prod-img">
+        <div class="checkout-prod-info">
+          <div class="checkout-prod-title">${p.title}</div>
+          <div class="checkout-prod-qty">Qty: 1</div>
+          <div class="checkout-price-row">
+            <span class="checkout-selling-price">₹${p.selling_price}</span>
+            <span class="checkout-original-price">₹${p.original_price}</span>
+            <span class="discount-tag" style="font-size: 11px;">${p.discount}</span>
+          </div>
+        </div>
+      `;
+
+      // Price breakdown calculation
+      const savings = p.original_price - p.selling_price;
+      priceCard.innerHTML = `
+        <h3 class="section-title" style="margin-bottom: 14px;">Price Details</h3>
+        <div class="price-item">
+          <span>Price (1 item)</span>
+          <span>₹${p.original_price}</span>
+        </div>
+        <div class="price-item">
+          <span>Discount</span>
+          <span style="color: var(--success-color); font-weight: 500;">- ₹${savings}</span>
+        </div>
+        <div class="price-item">
+          <span>Delivery Charges</span>
+          <span style="color: var(--success-color); font-weight: 500;">FREE</span>
+        </div>
+        <div class="price-item total">
+          <span>Total Amount</span>
+          <span>₹${p.selling_price}</span>
+        </div>
+        <div class="savings-highlight">
+          You will save ₹${savings} on this order
+        </div>
+      `;
+    }
+
+    // Confirm order click action
+    document.getElementById('confirmOrderBtn').addEventListener('click', () => {
+      if (!currentProduct) return;
+      // Redirect to payment with prices in the path e.g. /payment/278.4155
+      window.location.href = `/payment/${currentProduct.selling_price}.${currentProduct.original_price}`;
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAddress();
+      loadProductSummary();
+    });
+  </script>
+</body>
+</html>

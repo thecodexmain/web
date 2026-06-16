@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/product-details/:id", "destination": "/product_details.html?id=:id" },
+    { "source": "/payment/:prices", "destination": "/payment.html?prices=:prices" },
+    { "source": "/address", "destination": "/address.html" },
+    { "source": "/ordersummdary", "destination": "/ordersummdary.html" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ]
+}

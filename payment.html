@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Gateway - Kitchen & Salad Hub</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Specific override styles for payment options */
+    .option-lbl {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .option-lbl span:last-child {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Steps Progress Header -->
+    <div class="payment-steps-header">
+      <div class="step-indicator completed">
+        <span class="step-circle">&#10003;</span>
+        <span>Address</span>
+      </div>
+      <div class="step-indicator completed">
+        <span class="step-circle">&#10003;</span>
+        <span>Summary</span>
+      </div>
+      <div class="step-indicator active">
+        <span class="step-circle">3</span>
+        <span>Payment</span>
+      </div>
+    </div>
+
+    <!-- Countdown Timer block -->
+    <div class="deal-timer-banner" style="background-color: #fffde7; border-bottom: 1px solid rgba(251, 100, 27, 0.15);">
+      <div class="deal-label" style="font-size: 13px;">Payment Session</div>
+      <div class="timer-box" id="paymentTimer" style="font-size: 13px; font-weight: 700;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="paymentTimerText">14:55</span>
+      </div>
+    </div>
+
+    <!-- Main Payment View -->
+    <div id="paymentMethodsView" style="flex-grow: 1; display: flex; flex-direction: column;">
+      <div style="padding: 16px 16px 8px; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+        All Payment Methods
+      </div>
+
+      <!-- Payment Methods List -->
+      <div class="payment-options-card">
+        <!-- PhonePe -->
+        <div class="payment-option-row" onclick="selectRadio('phonepe')">
+          <input type="radio" id="phonepe" name="paymentMethod" value="phonepe" class="payment-radio" checked>
+          <div class="payment-method-details">
+            <!-- SVG PhonePe style logo or text -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6739B7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+            <div class="option-lbl">
+              <span>Pay with PhonePe</span>
+              <span>Direct verification from PhonePe App</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paytm -->
+        <div class="payment-option-row" onclick="selectRadio('paytm')">
+          <input type="radio" id="paytm" name="paymentMethod" value="paytm" class="payment-radio">
+          <div class="payment-method-details">
+            <!-- SVG Paytm style logo or text -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B9F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <div class="option-lbl">
+              <span>Pay with Paytm</span>
+              <span>Direct redirect to Paytm wallet/UPI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scan QR Code -->
+        <div class="payment-option-row" onclick="selectRadio('scanqr')">
+          <input type="radio" id="scanqr" name="paymentMethod" value="scanqr" class="payment-radio">
+          <div class="payment-method-details">
+            <!-- SVG QR Code Icon -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <div class="option-lbl">
+              <span>Scan QR Code</span>
+              <span>Generate dynamic UPI QR Code to scan</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Stamp -->
+      <div style="text-align: center; margin-top: auto; padding: 24px; color: var(--text-muted); font-size: 11px;">
+        🔒 Secure 256-Bit SSL Encrypted Connection
+      </div>
+
+      <!-- Bottom Sticky Action Bar -->
+      <div class="bottom-sticky-bar">
+        <button class="sticky-btn btn-confirm" id="paymentContinueBtn">
+          Continue &amp; Pay ₹<span id="bottomPrice">278</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PhonePe/Paytm Verifying Verification Screen -->
+    <div id="verifyingScreen" style="display: none; flex-grow: 1;">
+      <div class="verifying-container">
+        <div class="spinner"></div>
+        <h2 class="verifying-title" id="verifyingTitle">Verifying your payment...</h2>
+        <p class="verifying-desc" id="verifyingDesc">
+          Complete the ₹278 payment in the PhonePe app. We will auto-detect the status here within a few seconds. Do not press back or close this window.
+        </p>
+        <button class="btn-secondary" id="openAppBtn">Open App Again</button>
+        <button class="btn-secondary" id="changeMethodBtn" style="border-color: transparent; color: var(--accent-color);">
+          Choose another payment method
+        </button>
+      </div>
+    </div>
+
+    <!-- Scan QR Code Modal Box -->
+    <div class="modal-overlay" id="qrModalOverlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span>Scan QR to Pay</span>
+          <button class="modal-close" onclick="closeQRModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="qr-amount-text">₹<span id="qrModalAmount">278</span></div>
+          
+          <div class="qr-code-wrapper" id="qrCodeContainer">
+            <!-- Dynamic SVG QR Code will be drawn here -->
+          </div>
+          
+          <div class="qr-expires-label">
+            QR expires in <span id="qrExpireTimer">04:59</span>
+          </div>
+
+          <div class="qr-buttons">
+            <button class="qr-btn" onclick="alert('QR code downloaded to downloads folder!')">
+              <!-- Download Icon -->
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              <span>Download</span>
+            </button>
+            <button class="qr-btn" onclick="alert('QR code link copied to clipboard!')">
+              <!-- Share Icon -->
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Share QR</span>
+            </button>
+          </div>
+          <div class="qr-instructions">
+            Scan this QR code with any UPI app (PhonePe, Paytm, GooglePay, BHIM) to complete your payment.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Extract price arguments from query string: e.g. prices=278.4155
+    const urlParams = new URLSearchParams(window.location.search);
+    const pricesParam = urlParams.get('prices') || '278.4155';
+    const [sellingPrice, originalPrice] = pricesParam.split('.');
+
+    let activeUpiId = 'merchant@ybl'; // default fallback
+
+    // Update prices on DOM
+    document.getElementById('bottomPrice').textContent = sellingPrice;
+    document.getElementById('qrModalAmount').textContent = sellingPrice;
+
+    // Helper: Select radio options when clicking rows
+    function selectRadio(id) {
+      document.getElementById(id).checked = true;
+    }
+
+    // Load dynamic UPI ID from server config
+    async function loadUpiConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        if (data && data.upi_id) {
+          activeUpiId = data.upi_id;
+          console.log("Active UPI ID loaded: " + activeUpiId);
+        }
+      } catch (err) {
+        console.error("Error fetching UPI config:", err);
+      }
+    }
+
+    // Payment countdown session
+    function initPaymentTimer() {
+      let timerEnd = sessionStorage.getItem('payment_timer_end');
+      if (!timerEnd) {
+        timerEnd = Date.now() + (14 * 60 * 1000) + (55 * 1000);
+        sessionStorage.setItem('payment_timer_end', timerEnd);
+      } else {
+        timerEnd = parseInt(timerEnd, 10);
+        if (timerEnd < Date.now()) {
+          timerEnd = Date.now() + (14 * 60 * 1000) + (55 * 1000);
+          sessionStorage.setItem('payment_timer_end', timerEnd);
+        }
+      }
+
+      function updateClock() {
+        const remaining = timerEnd - Date.now();
+        const el = document.getElementById('paymentTimerText');
+        if (!el) return;
+
+        if (remaining <= 0) {
+          el.textContent = "Session Ended";
+          return;
+        }
+
+        const mins = Math.floor((remaining % (3600 * 1000)) / (60 * 1000));
+        const secs = Math.floor((remaining % (60 * 1000)) / 1000);
+
+        const mStr = mins.toString().padStart(2, '0');
+        const sStr = secs.toString().padStart(2, '0');
+
+        el.textContent = `${mStr}:${sStr}`;
+      }
+
+      setInterval(updateClock, 1000);
+      updateClock();
+    }
+
+    // Dynamic QR Code SVG Generator for a highly polished aesthetic
+    function drawMockQRCode() {
+      const container = document.getElementById('qrCodeContainer');
+      const size = 25; // 25x25 grid
+      const cellSize = 8;
+      const width = size * cellSize;
+      
+      // Let's create a 2D grid
+      let grid = Array(size).fill().map(() => Array(size).fill(0));
+      
+      // Seed randomized binary cells
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          grid[r][c] = Math.random() > 0.45 ? 1 : 0;
+        }
+      }
+      
+      // Apply Finder Patterns at Corners
+      function drawFinder(sr, sc) {
+        // Outer 7x7 black border
+        for (let r = 0; r < 7; r++) {
+          for (let c = 0; c < 7; c++) {
+            grid[sr+r][sc+c] = (r === 0 || r === 6 || c === 0 || c === 6) ? 1 : 0;
+          }
+        }
+        // Inner 3x3 black center
+        for (let r = 2; r < 5; r++) {
+          for (let c = 2; c < 5; c++) {
+            grid[sr+r][sc+c] = 1;
+          }
+        }
+      }
+      
+      drawFinder(0, 0); // Top-left
+      drawFinder(0, size - 7); // Top-right
+      drawFinder(size - 7, 0); // Bottom-left
+      
+      // Small alignment pattern at (size-9, size-9)
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          grid[size-9+r][size-9+c] = (r === 0 || r === 4 || c === 0 || c === 4 || (r === 2 && c === 2)) ? 1 : 0;
+        }
+      }
+
+      // Convert grid to SVG markup
+      let rects = '';
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (grid[r][c] === 1) {
+            rects += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#000"/>`;
+          }
+        }
+      }
+
+      // Show QR code with configured UPI ID
+      container.innerHTML = `
+        <svg width="${width}" height="${width}" viewBox="0 0 ${width} ${width}" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+          <rect width="100%" height="100%" fill="#fff"/>
+          ${rects}
+          <!-- UPI Logo in the middle -->
+          <rect x="${width/2 - 12}" y="${width/2 - 12}" width="24" height="24" rx="4" fill="#fff" stroke="#007a87" stroke-width="1.5"/>
+          <text x="${width/2}" y="${width/2 + 4}" font-family="sans-serif" font-size="9" font-weight="900" fill="#007a87" text-anchor="middle">UPI</text>
+        </svg>
+        <div style="font-size: 10px; font-weight: bold; color: #555; margin-top: 6px; word-break: break-all;">
+          UPI ID: ${activeUpiId}
+        </div>
+      `;
+    }
+
+    // Modal QR Code countdown timer
+    let qrTimerInterval = null;
+    function startQRTimer() {
+      let duration = 5 * 60; // 5 minutes
+      const el = document.getElementById('qrExpireTimer');
+      
+      if (qrTimerInterval) clearInterval(qrTimerInterval);
+
+      function updateQRClock() {
+        if (duration <= 0) {
+          el.textContent = "Expired";
+          clearInterval(qrTimerInterval);
+          return;
+        }
+        duration--;
+        const mins = Math.floor(duration / 60);
+        const secs = duration % 60;
+        el.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      qrTimerInterval = setInterval(updateQRClock, 1000);
+      updateQRClock();
+    }
+
+    // Record order to database config
+    async function recordOrderToBackend(method, status) {
+      // Retrieve customer address details from localStorage
+      let address = {};
+      const savedAddress = localStorage.getItem('delivery_address');
+      if (savedAddress) {
+        try { address = JSON.parse(savedAddress); } catch(e) {}
+      }
+
+      // Retrieve product title
+      const productTitle = localStorage.getItem('selected_product_title') || "Curated Kitchen Appliance Product";
+      const orderId = 'OD' + Math.floor(10000000 + Math.random() * 90000000);
+
+      const orderData = {
+        order_id: orderId,
+        name: address.fname || 'Guest Customer',
+        mobile: address.mobile || '9876543210',
+        city: address.city || 'Noida',
+        state: address.state || 'Uttar Pradesh',
+        price: sellingPrice,
+        product_title: productTitle,
+        payment_method: method,
+        status: status,
+        timestamp: Date.now()
+      };
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(orderData)
+        });
+        const result = await res.json();
+        console.log("Order logged: " + JSON.stringify(result));
+      } catch (err) {
+        console.error("Error saving order log:", err);
+      }
+    }
+
+    // Continue button flow click
+    document.getElementById('paymentContinueBtn').addEventListener('click', async () => {
+      const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+      if (selectedMethod === 'scanqr') {
+        // Record as success (or pending) immediately when QR opens
+        await recordOrderToBackend('Scan QR', 'Success');
+        
+        // Open QR code modal overlay
+        document.getElementById('qrModalOverlay').classList.add('active');
+        drawMockQRCode();
+        startQRTimer();
+      } else {
+        // Open PhonePe / Paytm dynamic verification state
+        const providerName = selectedMethod === 'phonepe' ? 'PhonePe' : 'Paytm';
+        document.getElementById('paymentMethodsView').style.display = 'none';
+        document.getElementById('verifyingScreen').style.display = 'flex';
+        
+        document.getElementById('verifyingTitle').textContent = `Completing payment in ${providerName}...`;
+        document.getElementById('verifyingDesc').textContent = `Complete the ₹${sellingPrice} payment in the ${providerName} app. We will auto-detect the transaction here within a few seconds. Please do not press back or close this window.`;
+        document.getElementById('openAppBtn').textContent = `Open ${providerName} App Again`;
+
+        // Record as Success order
+        await recordOrderToBackend(providerName, 'Success');
+
+        // Simulate automatic verification check after 8 seconds
+        setTimeout(() => {
+          alert(`Payment verification simulation completed! Order placed successfully for ₹${sellingPrice}.`);
+          window.location.href = '/';
+        }, 8000);
+      }
+    });
+
+    // Close Scan QR Modal
+    function closeQRModal() {
+      document.getElementById('qrModalOverlay').classList.remove('active');
+      if (qrTimerInterval) clearInterval(qrTimerInterval);
+    }
+
+    // Modal secondary action buttons
+    document.getElementById('openAppBtn').addEventListener('click', () => {
+      alert("Simulated opening external UPI payment application...");
+    });
+
+    document.getElementById('changeMethodBtn').addEventListener('click', () => {
+      document.getElementById('verifyingScreen').style.display = 'none';
+      document.getElementById('paymentMethodsView').style.display = 'flex';
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initPaymentTimer();
+      await loadUpiConfig();
+    });
+  </script>
+</body>
+</html>
